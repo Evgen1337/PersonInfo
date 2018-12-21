@@ -1,0 +1,606 @@
+﻿@model PeopleInfo.Models.UserViewModel
+
+</br>
+<div class="container">
+    <a class="btn btn-success" style="margin-bottom:12px;" onclick="addView()"><span class="glyphicon glyphicon-plus" data-toggle="modal"></span>Добавить</a>
+    <a class="btn btn-danger" style="margin-bottom:12px;" onclick=""><span class="glyphicon glyphicon-alert" data-toggle="modal"></span> Удалить выбранные записи</a>
+    </br>
+    <table id="example" class="table table-striped table-bordered" style="width:100%">
+        <thead>
+            <tr>
+                <th>Фамилия</th>
+                <th>Имя</th>
+                <th>Почта</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+    </table>
+
+    <link href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css" rel="stylesheet" />
+
+    @section scripts{
+        <script src="~/scripts/jquery.maskedinput.js" type="text/javascript"></script>
+        <script src="~/scripts/jquery.validate.min.js"></script>
+        <script src="~/Scripts/jquery.validate.unobtrusive.js"></script>
+        <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+
+
+        <script>
+
+            //Функция таблицы
+            $(document).ready(function () {
+
+                Datatables = $("#example").DataTable({
+
+                    "ajax": {
+
+                        "type": "GET",
+                        "url": "@Url.Action("GetData","Home")",
+                        "datatype": "JSON",
+
+                    },
+                    "columns": [
+
+
+                        { "data": "LastName" },
+                        { "data": "Name" },
+                        { "data": "Email" },
+                        {
+                            "data": "Id", "render": function (data) {
+
+
+                                return "<a class='btn btn-success' onclick=editRow(" + data + ") style='margin-left:12px'><i class='glyphicon glyphicon-edit'></i>Изменить<a/>  <a class='btn btn-danger' onclick=deleteRow(" + data + ")><i class='glyphicon glyphicon-trash'></i> Удалить <a/> </br> <a class='btn btn-info' onclick=showInfo(" + data + ") style='margin-left:12px'><i class='glyphicon glyphicon-user'></i>Просмотр<a/> <a class='btn btn-success' ><input id='Enable' name='Enable' type='checkbox' value='true' />Выбрать<a/>";
+
+
+                            },
+
+                            "orderable": false,
+                            "width": "250px"
+
+                        },
+
+
+                    ],
+                    "language":{
+
+                        "processing": "Подождите...",
+                        "search": "Поиск:",
+                        "lengthMenu": "Показать _MENU_ записей",
+                        "info": "Записи с _START_ до _END_ из _TOTAL_ записей",
+                        "infoEmpty": "Записи с 0 до 0 из 0 записей",
+                        "infoFiltered": "(отфильтровано из _MAX_ записей)",
+                        "infoPostFix": "",
+                        "loadingRecords": "Загрузка записей...",
+                        "zeroRecords": "Записи отсутствуют.",
+                        "emptyTable": "В таблице отсутствуют данные",
+                        "paginate": {
+                            "first": "Первая",
+                            "previous": "Предыдущая",
+                            "next": "Следующая",
+                            "last": "Последняя"
+                        },
+                        "aria": {
+                            "sortAscending": ": активировать для сортировки столбца по возрастанию",
+                            "sortDescending": ": активировать для сортировки столбца по убыванию"
+                        }
+                    },
+
+                });
+            });
+
+
+        </script>
+
+    }
+
+    <script>
+
+            //Функция добавления нового пользователя
+
+            function addView() {
+
+                $("#myModal").modal('show');
+
+                $("#submitData").show();
+                $("#updateRecord").hide();
+
+                $("#Number").mask("+7 (999) 999-99-99");
+
+                $(function () {
+                    var dtToday = new Date();
+
+                    var month = dtToday.getMonth() + 1;
+                    var day = dtToday.getDate();
+                    var year = dtToday.getFullYear();
+
+                    if (month < 10)
+                        month = '0' + month.toString();
+                    if (day < 10)
+                        day = '0' + day.toString();
+
+                    var maxDate = year + '-' + month + '-' + day;
+                    $('#txtDate').attr('max', maxDate);
+                });
+
+                $("#idGt").val("");
+                $("#Name").val("");
+                $("#LastName").val("");
+                $("#FatherName").val("");
+                $("#Email").val("");
+                $("#Number").val("");
+                $("#BirthDay").val("");
+                $("#Gender").val("");
+                $("#Inn").val("");
+
+
+                return false;
+            }
+
+            //Функция проверки на наличее ИНН в бд (срабатывает при наборе)
+
+            function innCheck() {
+            $("#Status").html("Checking...");
+            $.post("@Url.Action("CheckInnAvailability", "Home")",
+                {
+                    user: $("#Inn").val()
+                },
+            function (data) {
+                if (data == 0) {
+                    $("#Status").html('<font color="Green">Данных не найдено.</font>');
+                    $("#Inn").css("border-color", "Green");
+
+                }
+                else {
+                    $("#Status").html('<font color="Red">Такой пользователь уже существуюет.</font>');
+                    $("#Inn").css("border-color", "Red");
+                }
+            });
+            }
+
+            //Функция проверки на наличее номера телефона в бд (срабатывает при наборе)
+
+            function numberCheck() {
+            $("#Status").html("Checking...");
+            $.post("@Url.Action("CheckNumberAvailability", "Home")",
+                {
+                    user: $("#Number").val()
+                },
+            function (data) {
+                if (data == 0) {
+                    $("#Status").html('<font color="Green">Данных не найдено.</font>');
+                    $("#Number").css("border-color", "Green");
+
+                }
+                else {
+                    $("#Status").html('<font color="Red">Такой пользователь уже существуюет.</font>');
+                    $("#Number").css("border-color", "Red");
+                }
+            });
+            }
+
+            //Функция проверки на наличее номера телефона в бд (срабатывает при нажатии на кнопку в форме добавления)
+
+            function nLbCheck() {
+            $("#Status").html("Checking...");
+            $.post("@Url.Action("CheckNameLastNDateBirthAvailability", "Home")",
+                {
+                    user: [$("#Name").val(),
+                        $("#LastName").val(),
+                        $("#BirthDay").val()
+                    ]
+                },
+            function (data) {
+                if (data == 0) {
+                    $("#Status").html('<font color="Green">Available !. you can take it.</font>');
+                    $("#Name").css("border-color", "Green");
+                    $("#LastName").css("border-color", "Green");
+                    $("#BirthDay").css("border-color", "Green");
+
+                }
+                else {
+                    $("#Status").html('<font color="Red">That name is taken.Try Another.</font>');
+                    $("#Name").css("border-color", "Red");
+                    $("#LastName").css("border-color", "Red");
+                    $("#BirthDay").css("border-color", "Red");
+                }
+            });
+            }
+
+            //Функция  отправки данных в бд (для сохранения или перезаписи)
+
+            function btnSubmit() {
+
+                var Data = $("#formSubmit").serialize();
+
+                    $.ajax({
+
+                        type: 'POST',
+                        url: '@Url.Action("PostData", "Home")',
+                        data: Data,
+                        datatype: 'JSON',
+                        success: function (response) {
+                            if (response.result) {
+
+                                $.notify(response.message, {
+
+                                    globalPosition: 'top right',
+                                    className: 'success',
+
+                                })
+                                Datatables.ajax.reload();
+                                $("#myModal").modal('hide');
+                            }
+                        },
+
+                        error: function (msg) {
+                            alert(msg.responseText);
+                        }
+
+
+                    });
+            }
+
+            //Функция удаления пользователя по Id
+
+             function deleteRow(id) {
+                if (confirm("Вы уверены что хотите удалить запись ?")) {
+                    $.ajax({
+
+                        type: 'POST',
+                        url: '@Url.Action("DeleteData", "Home")/' + id,
+                        datatype:'JSON',
+                        success: function (response) {
+                            if (response.result) {
+
+                                $.notify(response.message, {
+
+                                    globalPosition: 'top right',
+                                    className: 'success',
+                                })
+                                Datatables.ajax.reload();
+                                $("#myModal").modal('hide');
+                            }
+                        },
+                        error: function (msg) {
+                            alert(msg.responseText);
+                        }
+
+                    });
+                }
+             }
+
+            //Функция выбора по Id пользователя для изменения
+
+            function editRow(id) {
+                var Data = $("#formSubmit").serialize();
+                $.ajax({
+
+
+                    type: 'GET',
+                    url:'@Url.Action("GetEdit", "Home")/'+ id,
+                    datatype: 'JSON',
+                    success: function (rs) {
+
+                        $("#idGt").val(rs.Id);
+                        $("#Name").val(rs.Name);
+                        $("#LastName").val(rs.LastName);
+                        $("#FatherName").val(rs.FatherName);
+                        $("#Email").val(rs.Email);
+                        $("#Number").val(rs.Number);
+                        $("#BirthDay").val(rs.BirthDay);
+                        $("#Gender").val(rs.Gender);
+                        $("#Inn").val(rs.Inn);
+
+                        $("#myModal").modal('show');
+
+                        $("#updateRecord").show();
+
+                    },
+                    error: function (msg) {
+                        alert(msg.responseText);
+                    }
+
+
+                });
+
+            }
+
+            //Функция кнопки перезаписи
+
+            function updateSubmit() {
+
+                var Data = $("#formSubmit").serialize();
+                $.ajax({
+
+                    type: 'POST',
+                    url: '@Url.Action("PostData", "Home")',
+                    data: Data,
+                    datatype: 'JSON',
+                    success: function (response) {
+                        if (response.result) {
+
+                            $.notify(response.message, {
+
+                                globalPosition: 'top right',
+                                className: 'success',
+
+                            })
+
+                            Datatables.ajax.reload();
+                            $("#myModal").modal('hide');
+                        }
+                    },
+                    error: function (msg) {
+                        alert(msg.responseText);
+                    }
+
+
+                });
+            }
+
+            //Функция отображения формы с информацией
+
+            function showInfo(id) {
+            var Data = $("#submitData").serialize();
+                $.ajax({
+
+                    type: 'GET',
+                    url:'@Url.Action("ShowInfo", "Home")/'+ id,
+                    datatype: 'JSON',
+                    success: function (rs) {
+
+                        $("#idGt_show").val(rs.Id);
+                        $("#Name_show").val(rs.Name);
+                        $("#LastName_show").val(rs.LastName);
+                        $("#FatherName_show").val(rs.FatherName);
+                        $("#Email_show").val(rs.Email);
+                        $("#Number_show").val(rs.Number);
+                        $("#BirthDay_show").val(rs.BirthDay);
+
+                        switch (rs.Gender) {
+                            case 0:
+                                $("#Gender_show").val("Не выбрано");
+                                break;
+                            case 1:
+                                $("#Gender_show").val("Мужcкой");
+                                break;
+                            case 2:
+                                $("#Gender_show").val("Женский");
+                                break;
+                            default:
+                                $("#Gender_show").val("Не выбрано");
+                                break;
+
+                        }
+
+                        $("#Inn_show").val(rs.Inn);
+
+                        $("#infoModal").modal('show');
+
+
+                },
+                error: function (msg) {
+                    alert(msg.responseText);
+                    }
+                });
+
+            }
+
+    </script>
+
+
+    @*Форма добавления/перезаписи*@
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content" style="border-radius:0px;width: 402px;">
+                <div class="modal-header">
+                    @*<a class='' onclick=closeModal()><i class='glyphicon glyphicon-remove'></i></a>*@
+                    </br>
+                    <h5 class="modal-title" id="exampleModalLabel" style="font-weight:bold;">Добавление/Изменение пользователя</h5>
+
+                </div>
+
+                <div class="modal-body" id="categet">
+                    <div class="panel-group">
+                        <div class="panel-default">
+                            <div class="panel panel-success">
+                                <div class="panel-heading"><strong>Поля отмеченые (*) обязательные</strong></br><strong><p id="errorMsg"></p><p id="Status" /></p></strong></div>
+                                <div class="panel-body">
+                                    <div class="col-sm-8 col-sm-offset-2">
+
+                                        @using (Html.BeginForm("PostData", "Home", FormMethod.Post, new { @id = "formSubmit" }))
+                                        {
+
+                                            @Html.AntiForgeryToken()
+
+                                            @Html.HiddenFor(m => m.Id, new { @id = "idGt" })
+
+
+
+                                            <div class="form-group">
+                                                <strong><p>Имя*</p></strong>
+                                                <div class="input-group">
+
+                                                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", @name = "Name", @id = "Name", @placeholder = "Name" })
+                                                    @Html.ValidationMessageFor(m => m.Name)
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <strong><p>Фамилия*</p></strong>
+                                                <div class="input-group">
+
+                                                    @Html.TextBoxFor(m => m.LastName, new { @class = "form-control", @name = "LastName", @id = "LastName", @placeholder = "LastName" })
+                                                    @Html.ValidationMessageFor(m => m.LastName)
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Отчество</p></strong>
+                                                <div class="input-group">
+
+                                                    @Html.TextBoxFor(m => m.FatherName, new { @class = "form-control", @name = "FatherName", @id = "FatherName", @placeholder = "FatherName" })
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Электронная почта*</p></strong>
+                                                <div class="input-group">
+                                                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", @name = "Email", @id = "Email", @placeholder = "Email" })
+                                                    @Html.ValidationMessageFor(m => m.Email)
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Номер телефона</p></strong>
+                                                <div class="input-group">
+
+                                                    @Html.TextBoxFor(m => m.Number, new { @class = "form-control", @name = "Number", @id = "Number", @placeholder = "Number", onchange = "numberCheck()" })
+                                                    @Html.ValidationMessageFor(m => m.Number)
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Дата рождения*</p></strong>
+                                                <div class="input-group">
+
+                                                    @Html.TextBoxFor(m => m.BirthDay, new { type = "date", min = "1900-05-11", max = "2020-05-11", @class = "form-control", @name = "BirthDay", @id = "BirthDay", @placeholder = "BirthDay" })
+                                                    @Html.ValidationMessageFor(m => m.BirthDay)
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Пол</p></strong>
+                                                <div class="input-group">
+
+                                                    @Html.EnumDropDownListFor(x => x.Gender, "Укажите ваш пол", new { @class = "form-control", @name = "Gender", @id = "Gender" })
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>ИНН*</p></strong>
+                                                <div class="input-group">
+
+
+                                                    @Html.TextBoxFor(m => m.Inn, new { @class = "form-control", @name = "Inn", @id = "Inn", @placeholder = "Inn", onchange = "innCheck()" })
+                                                    @Html.ValidationMessageFor(m => m.Inn)
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-warning btn-block" id="submitData" onclick="nLbCheck()"> Проверить на доступность</button>
+                                            <button type="button" class="btn btn-success btn-block" id="submitData" onclick="btnSubmit()">Сохранить</button>
+
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*Форма отображения информации*@
+
+    <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content" style="border-radius:0px;width: 502px; height: 752px;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel" style="font-weight:bold;">Просмотр пользователя</h5>
+
+                </div>
+
+                <div class="modal-body" id="categet">
+                    <div class="panel-group">
+                        <div class="panel-default">
+                            <div class="panel panel-success">
+
+                                <div class="panel-body">
+                                    <div class="col-sm-8 col-sm-offset-2">
+
+                                        @using (Html.BeginForm("ShowInfo", "Home"))
+                                        {
+                                            @Html.AntiForgeryToken()
+
+                                            @Html.HiddenFor(m => m.Id, new { @id = "idGt" })
+
+
+
+
+                                            <div class="form-group">
+                                                <strong><p>Имя</p></strong>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+
+                                                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", @name = "Name_show", @id = "Name_show", @placeholder = "Name", @readonly = "readonly" })
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Фамилия</p></strong>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.LastName, new { @class = "form-control", @name = "LastName_show", @id = "LastName_show", @placeholder = "LastName", @readonly = "readonly" })
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Отчество</p></strong>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.FatherName, new { @class = "form-control", @name = "FatherName_show", @id = "FatherName_show", @placeholder = "FatherName", @readonly = "readonly" })
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Электронная почта</p></strong>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", @name = "Email_show", @id = "Email_show", @placeholder = "Email", @readonly = "readonly" })
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Номер телефона</p></strong>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.Number, new { @class = "form-control", @name = "Number_show", @id = "Number_show", @placeholder = "Number", @readonly = "readonly" })
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Дата рождения</p></strong>
+                                                <div class="input-group">
+
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.BirthDay, new { type = "date", @class = "form-control", @name = "BirthDay_show", @id = "BirthDay_show", @placeholder = "BirthDay", @readonly = "readonly" })
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>Пол</p></strong>
+                                                <div class="input-group">
+
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.Gender, new { @class = "form-control", @name = "Gender_show", @id = "Gender_show", @placeholder = "Gender", @readonly = "readonly" })
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <strong><p>ИНН</p></strong>
+                                                <div class="input-group">
+
+                                                    <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
+                                                    @Html.TextBoxFor(m => m.Inn, new { @class = "form-control", @name = "Inn_show", @id = "Inn_show", @placeholder = "Inn", @readonly = "readonly" })
+
+                                                </div>
+                                            </div>
+
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
